@@ -112,8 +112,10 @@
 	        	// success var will contain a 1 if the name is available
 	        	// and 0 if it not available.
 	        	
-	        	console.log('Checking cloud...');
-	            console.log(success);
+                if(window.console) {
+                    console.log('Checking cloud...');
+                    console.log(success);
+                }
 	        	
 	        	if(success==1)
 	        	{
@@ -138,7 +140,9 @@
 	        },
 	        changed: function(elem) {
 				//Called when user is typing
-	            console.log('Changing cloud...');
+                if(window.console) {
+                    console.log('Changing cloud...');
+                }
 	        },
 	        // indicates if the leading symbol should be removed prior to adding the 
 	        // name to the path

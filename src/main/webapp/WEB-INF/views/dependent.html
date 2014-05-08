@@ -144,8 +144,10 @@
 	        	// success var will contain a 1 if the name is available
 	        	// and 0 if it not available.
 	        	
-	        	console.log('Checking cloud...');
-	            console.log(success);
+                if(window.console) {
+                    console.log('Checking cloud...');
+                    console.log(success);
+                }
 	        	
 	        	if(success==1)
 	        	{
@@ -173,7 +175,9 @@
 	        },
 	        changed: function(elem) {
 				//Called when user is typing
-	            console.log('Changing cloud...');
+                if(window.console) {
+                    console.log('Changing cloud...');
+                }
 	        },
 	        // indicates if the leading symbol should be removed prior to adding the 
 	        // name to the path
@@ -181,7 +185,7 @@
 	        
 	        // indicates the location of the availability service
 			
-	        availibilityAPI :  $(avAPI).val()
+	        availibilityAPI :  document.getElementById("avAPI").value
 				
 	    }); 
 	}
@@ -214,9 +218,8 @@
          }
          $("#duplicateCloudName").html(retVal);
          $("#duplicateCloudName").css('color', 'red');
-         if(retVal == null) {
-             document.getElementById('submit').disabled = false;
-         }
+
+         disableEnableContinue();
      }		
     checkCloudNameAvailability("dependentCloudName", "isAvailable");
 
@@ -232,7 +235,7 @@
       var isValidDate = 'isValidDate' +  window.mycounter;
 	  var divId = 'dependent'+ window.mycounter;
 	      
-      var strA = '<div id="'+divId+'"><table ><tr><td><p class="payment3">Dependent&apos;s cloud name &nbsp;&nbsp;&nbsp;&nbsp;<a href="#" onclick="removeDiv('+divId+');">Delete Dependent</a></p></td></tr>  <tr> <td> <input type="text" class="inputFields smallMarg" name="' ;
+	  var strA = '<div id="'+divId+'"><table ><tr><td><p class="payment3">Dependent&apos;s cloud name &nbsp;&nbsp;&nbsp;&nbsp;<a href="#" onclick="removeDiv(document.getElementById('+divId+'));">Delete Dependent</a></p></td></tr>  <tr> <td> <input type="text" class="inputFields smallMarg" name="' ;
       var strB = strA + depCloudName ;
       var strC = strB + '"  id="' ;
       var strD = strC +  depCloudName ;
@@ -254,9 +257,44 @@
 });
 function removeDiv(depDiv) {
 
-    console.log('Going to remove ...' + depDiv);   
-	$(depDiv).remove();
+    if(window.console) {
+        console.log('Going to remove ...' + depDiv);
+    }
+    $(depDiv).remove();
 }	
+//Function to disable enable the Continue button.
+//Enable Continue botton, if no error in dependent cloudname and birthdate.
+function disableEnableContinue() {
+    var enableSubmit = true;
+    if($('span#duplicateCloudName').text() != "") {
+        enableSubmit = false;
+    } else {
+        if(window.mycounter == undefined) {
+            if($('span#isValidDate').text() != "") {
+               enableSubmit = false;
+            }
+        } else {
+            var i=0;
+            while(i<=window.mycounter && enableSubmit) {
+                if(i == 0) {
+                    if($('span#isValidDate').text() != "") {
+                        enableSubmit = false;
+                    }
+                } else {
+                    if(($('span#isValidDate'+window.mycounter).text() != "")) {
+                        enableSubmit = false;
+                    }
+                }
+                i++;
+            }
+        }
+    }
+    if(enableSubmit) {
+        document.getElementById('submit').disabled = false;
+    } else {
+        document.getElementById('submit').disabled = true;
+    }
+}
 /*]]>*/
 
 </script>
