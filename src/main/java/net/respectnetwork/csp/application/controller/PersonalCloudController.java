@@ -175,30 +175,32 @@ public class PersonalCloudController
       boolean errors = false;
       logger.info("Cloudname from request parameter "
             + request.getParameter("cloudname"));
-      if (request.getParameter("cloudname") == null)
+      String cName = request.getParameter("cloudname");
+      if (cName == null)
+      {
+         cName = regSession.getCloudName();
+         if(cName == null) {
+            return processLogout(request, model);
+         }
+      }
+
+      if (!cName.startsWith("="))
+      {
+         cName = "=" + cName;
+      }
+      
+      if(cName != null && regSession.getCloudName() != null && !cName.equalsIgnoreCase(regSession.getCloudName()))
       {
          return processLogout(request, model);
       }
-      
-		String cName = request.getParameter("cloudname");
-
+		
 	  if(!RegistrationManager.validateCloudName(cName) ) {
           errors = true;
           errorText = RegistrationManager.validINameFormat;
       }
 
       if(errors == false) {
-      if (request.getParameter("cloudname") != null)
-      {
          cloudName = CloudName.create(cName);
-      } else if (regSession.getCloudName() != null)
-      {
-         cloudName = CloudName.create(regSession.getCloudName());
-      }
-      if (cloudName == null)
-      {
-         return processLogout(request, model);
-      }
       logger.info("Logging in for cloudname " + cloudName.toString());
       net.respectnetwork.sdk.csp.CSP myCSP = registrationManager
             .getCspRegistrar();
@@ -240,7 +242,7 @@ public class PersonalCloudController
                   logger.info("Setting cloudname as  " + cloudName);
                   if (request.getParameter("cloudname") != null)
                   {
-                     regSession.setCloudName(request.getParameter("cloudname"));
+                     regSession.setCloudName(cName);
                   }
                   // logger.info("Setting secret token as  " +
                   // request.getParameter("secrettoken"));
@@ -274,7 +276,7 @@ public class PersonalCloudController
 			   errorText += "Invalid User/Password.";
                errors = true;
 			   logger.info("Authenticating to personal cloud failed for "
-                       + request.getParameter("cloudname"));
+                       + cloudName);
             }
          } catch (Xdi2ClientException e)
          {
@@ -283,7 +285,7 @@ public class PersonalCloudController
             errors = true;
 			errorText += "Invalid User/Password.";
             logger.debug("Authenticating to personal cloud failed for "
-                  + request.getParameter("cloudname"));
+                  + cloudName);
          }
 
       } else
@@ -688,12 +690,14 @@ public class PersonalCloudController
                "Please select payment method.");
          logger.debug("No payment method selected.");
          mv.addObject("cspTCURL", this.getRegistrationManager().getCspTCURL());
+         mv.addObject("paymentInfo", paymentForm);
          return mv;
      }
       logger.debug("cspTandC..." + request.getParameter("cspTandC"));
       if(request.getParameter("cspTandC") == null || !request.getParameter("cspTandC").equalsIgnoreCase("on"))
       {
          mv = new ModelAndView("payment");
+         mv.addObject("paymentInfo", paymentForm);
          errors = true;
          mv.addObject(
                "error",
@@ -708,6 +712,7 @@ public class PersonalCloudController
             && (request.getParameter("giftCodes").trim() == null || request.getParameter("giftCodes").trim().isEmpty()))
       {
          mv = new ModelAndView("payment");
+         mv.addObject("paymentInfo", paymentForm);
          errors = true;
          mv.addObject(
                "error",
@@ -730,6 +735,7 @@ public class PersonalCloudController
                "Payment with gift card is not checked. However, a gift code has been provided. Please verify that the gift code is appropriate and a proper payment type is selected.");
          logger.debug("Gift code given but gift code choice is not given.");
          mv.addObject("cspTCURL", this.getRegistrationManager().getCspTCURL());
+         mv.addObject("paymentInfo", paymentForm);
          return mv;
 
       } else {
@@ -744,6 +750,10 @@ public class PersonalCloudController
       DAOFactory dao = DAOFactory.getInstance();
       String giftCodesVal = request.getParameter("giftCodes");
       logger.debug("Giftcodes " + giftCodesVal);
+      if(giftCodesVal == null || giftCodesVal.isEmpty())
+      {
+         regSession.setGiftCode("");
+      }
 
       // String forwardingPage = request.getContextPath();
       String method = "post";
@@ -944,6 +954,7 @@ public class PersonalCloudController
          mv = new ModelAndView("payment");
          mv.addObject("error", errorText);
          mv.addObject("cspTCURL", this.getRegistrationManager().getCspTCURL());
+         mv.addObject("paymentInfo", paymentForm);
          return mv;
       }
 
@@ -1442,10 +1453,15 @@ public class PersonalCloudController
       {
          HttpPost httpPost = new HttpPost(latLongPostURL);
          List<NameValuePair> nvps = new ArrayList<NameValuePair>();
+         String payload = "{ newmemberlocations : "
+               + "["
+               + "{ \"latitude\" : " + regSession.getLatitude() + ", \"longitude\" :" +  regSession.getLongitude() +  "}"
+               
+               + "] }";
+
          if(regSession != null)
          {
-            nvps.add(new BasicNameValuePair("lat", regSession.getLatitude()+""));
-            nvps.add(new BasicNameValuePair("long", regSession.getLongitude()+""));
+            nvps.add(new BasicNameValuePair("newmemberlocations", payload));
          }
          httpPost.setEntity(new UrlEncodedFormEntity(nvps));
          CloseableHttpResponse response2 = httpclient.execute(httpPost);
